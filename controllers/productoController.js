@@ -72,13 +72,13 @@ exports.agregarProducto = async(req, res) => {
         if (transactionResults) {
             console.log("successfully created.");
             //res.json({mensaje: 'producto agregado correctamente'});
-            res.json("Producto Agragado correctamente");
+            res.json({mensaje: "agregado"});
         } else {
             console.log("transaccion abortada.");
-            res.status(500).send(err);
+            res.status(500).json({mensaje: err});
         }
     } catch (err) {
-        res.status(500).send(err);
+        res.status(500).json({mensaje: err});
         console.log("transacción abortada"+err);
     }
     finally {
@@ -151,18 +151,68 @@ exports.obtener = async (req, res) =>{
     }
 }
 
-exports.misProductos = async function (req, res) {
+exports.misProductos = async (req, res) =>{
     try {
-      const productos = await Producto.aggregate(
-        [{ "$lookup": { "from": "Usuario", "localField": "idVendedor", "foreignField": "ruc", "as": "Usuario" } },
-        { "$project": { "_id": 0, "Usuario": { "_id": 0, "clave": 0, "correo": 0, "telefono": 0, "ruc": 0 } } },
-        { "$unwind": { "path": "$Usuario", "preserveNullAndEmptyArrays": true } },
-        { "$project": { "nombreVendedor": "$Usuario.nombre", "idVendedor": 1, "nombre": 1, "categoria": 1, "precio": 1, "unidadDeMedida": 1, "calificacion": 1 } }]);
-      res.json(productos);
+        const ObjectId = mongoose.Types.ObjectId;
+
+        const usuarioRol = await Usuario.aggregate([
+            {$match: { _id : ObjectId(req.userId) }},  //filtro
+            
+            {   $lookup: {                                //relacionar colecciones
+                    from: "rols",                      
+                    localField: "role",                 
+                    foreignField: "_id",
+                    as: "rol_usuario"
+                }
+            },
+            {   $project:{                                //datos a mostrar
+                    _id: 1,
+                   rol: "$rol_usuario.nombre",
+                   produc: 1
+                }
+            }
+        ]);
+
+        //console.log("rol_usuario: "+usuarioRol[0].rol)
+        if(usuarioRol[0].rol == "productor"){
+            
+            const usuarrioProducto = await Usuario.aggregate([
+                {$match: { _id : ObjectId(req.userId) }},  //filtro
+                {   $lookup: {
+                        from: "productos",
+                        localField: "produc._id",
+                        foreignField: "_id",
+                        as: "productos_usuario"
+                    }
+                },
+                {   $unwind:                                //desglozar datos de un arreglo    
+                        "$productos_usuario"  
+                },
+                {
+                    $project: {                             //datos a mostrar
+                        _id: "$productos_usuario._id",
+                        descripcion: "$productos_usuario.descripcion",
+                        precio: "$productos_usuario.precio"
+                    }
+                }
+    
+            ]);
+            return res.json(usuarrioProducto);
+        }else {
+            const productos = await Producto.aggregate([
+                {   $project: {                                     //datos a mostrar                        
+                        _id: "$_id",
+                        descripcion: "$descripcion",
+                        precio: "$precio"
+                    }
+                }
+            ]);
+            return res.json(productos);
+        }
     } catch (error) {
-      res.status(500).send(error);
+        return res.status(500).send(error);
     }
-  };
+};
 
 //Eliminar Producto
 exports.eliminar = async(req, res) =>{

@@ -19,7 +19,6 @@ exports.miListaVentas = async function (req, res) {
   }
 }
 
-
 //Mis Compras
 exports.miListaCompras = async function (req, res) {
 

@@ -23,12 +23,8 @@ app.use('/api/tienda/auth', auths);
 
 app.get('/api/tienda',(req,res)=>{
     res.json({mensaje: "Bienvenido"});
-})
+});
 
-/*rutas protegidas
-app.use('/api/tienda/auth/login/user',userAuth, auths);
-app.use('/api/tienda/auth/login/admin',adminAuth, auths);
-*/
 
 //puerto al cual se conecta el back
 

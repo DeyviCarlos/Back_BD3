@@ -11,5 +11,5 @@ router.post('/add',[verifyToken,adminAuth],productoController.agregarProducto);
 router.delete('/:id',[verifyToken,adminAuth], productoController.eliminar);
 router.put('/edit/:id',[verifyToken,adminAuth], productoController.editar);
 router.get('/edit/:id', productoController.obtenerProducto);
-
+router.get('/misproductos',[verifyToken,adminAuth], productoController.misProductos);
 module.exports = router;
